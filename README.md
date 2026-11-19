@@ -4,7 +4,7 @@ An open-source project exploring context-aware code review for Git diffs.
 
 ## Status
 
-This project is at the planning stage. The repository currently contains the project outline; the MVP has not been implemented yet. I plan to use Devin to help build the first working version.
+An initial Python prototype parses unified text diffs into structured JSON, including files, hunks, changed lines, and old/new line numbers. Context extraction and automated review are planned and have not been implemented. I plan to use Devin to help develop the broader MVP.
 
 ## Planned MVP
 
@@ -22,4 +22,19 @@ This project is at the planning stage. The repository currently contains the pro
 
 ## Development
 
-Implementation, setup instructions, and usage examples will be added as the MVP takes shape.
+Requires Python 3.9 or later. No third-party dependencies are needed. Run these commands from the repository root:
+
+```sh
+# Parse the included example.
+python3 -m diff_review examples/hello.diff
+
+# Parse a working-tree diff (ordinary text patches only).
+git diff --no-ext-diff --no-color | python3 -m diff_review
+
+# Run the tests.
+python3 -m unittest discover -s tests -v
+```
+
+The output is a JSON array of files with `old_path`, `new_path`, and `hunks`. Each hunk includes its ranges and lines, with `type` (`context`, `add`, or `delete`), `content`, `old_line`, and `new_line`. A line number is `null` when the line does not exist on that side. New/deleted files use a `null` path for the missing side. No-newline markers set `no_newline` on the preceding line.
+
+This first parser supports ordinary unified text patches with `---`/`+++` headers. It rejects binary patches, combined merge diffs, and Git-quoted paths. Rename-only and mode-only changes are not represented; metadata is ignored in mixed patches, and input containing only metadata returns an error. An empty diff returns `[]`. Malformed hunks return an error and a nonzero CLI exit code.
